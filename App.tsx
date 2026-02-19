@@ -12,9 +12,9 @@ const Dashboard: React.FC<{
   setGroup: (g: StudentGroup) => void 
 }> = ({ onNavigate, group, setGroup }) => {
   const isK12 = group === StudentGroup.K12;
-  const themeClass = isK12 ? 'from-red-600 to-red-800 shadow-red-100' : 'from-teal-700 to-teal-900 shadow-teal-100';
-  const accentText = isK12 ? 'text-red-700' : 'text-teal-800';
-  const buttonClass = isK12 ? 'text-red-700' : 'text-teal-900';
+  const themeClass = isK12 ? 'from-red-600 to-red-800 shadow-red-100' : 'from-blue-700 to-blue-900 shadow-blue-100';
+  const accentText = isK12 ? 'text-red-700' : 'text-blue-800';
+  const buttonClass = isK12 ? 'text-red-700' : 'text-blue-900';
 
   return (
     <div className="space-y-8 animate-in fade-in duration-700">
@@ -36,7 +36,7 @@ const Dashboard: React.FC<{
               </button>
               <button 
                 onClick={() => setGroup(StudentGroup.BIRTH_TO_3)}
-                className={`px-8 py-4 rounded-[1.5rem] text-sm font-black transition-all ${!isK12 ? 'bg-white text-teal-900 shadow-2xl scale-105' : 'text-white/90 hover:text-white hover:bg-white/10'}`}
+                className={`px-8 py-4 rounded-[1.5rem] text-sm font-black transition-all ${!isK12 ? 'bg-white text-blue-900 shadow-2xl scale-105' : 'text-white/90 hover:text-white hover:bg-white/10'}`}
               >
                 Birth to 3
               </button>
@@ -64,7 +64,7 @@ const Dashboard: React.FC<{
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
         <div className="bg-white p-10 rounded-[3rem] border-2 border-slate-100 shadow-lg group">
-          <div className={`w-16 h-16 ${isK12 ? 'bg-red-50 text-red-600' : 'bg-teal-50 text-teal-700'} rounded-[1.5rem] flex items-center justify-center text-4xl mb-8 shadow-inner transition-transform group-hover:rotate-3`}>⏱️</div>
+          <div className={`w-16 h-16 ${isK12 ? 'bg-red-50 text-red-600' : 'bg-blue-50 text-blue-700'} rounded-[1.5rem] flex items-center justify-center text-4xl mb-8 shadow-inner transition-transform group-hover:rotate-3`}>⏱️</div>
           <h3 className="font-black text-slate-900 text-2xl mb-6 tracking-tight">Key Timelines</h3>
           <ul className="space-y-6 font-black">
             {isK12 ? (
@@ -94,7 +94,7 @@ const Dashboard: React.FC<{
         </div>
         
         <div className="bg-white p-10 rounded-[3rem] border-2 border-slate-100 shadow-lg cursor-pointer hover:border-slate-900 transition-all group relative overflow-hidden" onClick={() => onNavigate(AppRoute.TOOLS)}>
-          <div className={`w-16 h-16 ${isK12 ? 'bg-red-50 text-red-600' : 'bg-teal-50 text-teal-700'} rounded-[1.5rem] flex items-center justify-center text-4xl mb-8 shadow-inner`}>🛠️</div>
+          <div className={`w-16 h-16 ${isK12 ? 'bg-red-50 text-red-600' : 'bg-blue-50 text-blue-700'} rounded-[1.5rem] flex items-center justify-center text-4xl mb-8 shadow-inner`}>🛠️</div>
           <h3 className="font-black text-slate-900 text-2xl mb-4 tracking-tight">Compliance Tools</h3>
           <p className="text-slate-700 font-bold text-lg leading-relaxed mb-6">Calculate deadlines, test goals, and notify MARSS in seconds.</p>
           <div className={`inline-flex items-center gap-3 font-black text-sm uppercase tracking-[0.2em] ${accentText} group-hover:translate-x-4 transition-transform`}>
@@ -103,7 +103,7 @@ const Dashboard: React.FC<{
         </div>
 
         <div className="bg-white p-10 rounded-[3rem] border-2 border-slate-100 shadow-lg group">
-          <div className={`w-16 h-16 ${isK12 ? 'bg-red-50 text-red-600' : 'bg-teal-50 text-teal-700'} rounded-[1.5rem] flex items-center justify-center text-4xl mb-8 shadow-inner`}>📊</div>
+          <div className={`w-16 h-16 ${isK12 ? 'bg-red-50 text-red-600' : 'bg-blue-50 text-blue-700'} rounded-[1.5rem] flex items-center justify-center text-4xl mb-8 shadow-inner`}>📊</div>
           <h3 className="font-black text-slate-900 text-2xl mb-4 tracking-tight">Official Records</h3>
           <p className="text-slate-700 font-bold text-lg mb-8 leading-relaxed">Direct gateway for District 0277 student records.</p>
           <a href="https://15.spedforms.org/0277/" target="_blank" rel="noreferrer" className={`block w-full text-center py-5 rounded-2xl border-4 border-slate-900 bg-slate-900 text-white font-black text-sm uppercase tracking-widest hover:bg-white hover:text-slate-900 transition-all shadow-xl`}>SpEd Forms Login</a>
@@ -125,7 +125,7 @@ const Playbook: React.FC<{ group: StudentGroup, setGroup: (g: StudentGroup) => v
     setActiveSection(filteredSections[0]);
   }, [filteredSections]);
 
-  const accentBorder = isK12 ? 'border-red-600 ring-red-600 text-red-700' : 'border-teal-700 ring-teal-700 text-teal-800';
+  const accentBorder = isK12 ? 'border-red-600 ring-red-600 text-red-700' : 'border-blue-700 ring-blue-700 text-blue-800';
 
   return (
     <div className="flex flex-col h-full gap-8">
@@ -139,7 +139,7 @@ const Playbook: React.FC<{ group: StudentGroup, setGroup: (g: StudentGroup) => v
           </button>
           <button 
             onClick={() => setGroup(StudentGroup.BIRTH_TO_3)}
-            className={`px-10 py-4 rounded-[2rem] text-sm font-black transition-all ${!isK12 ? 'bg-white text-teal-800 shadow-2xl scale-105' : 'text-slate-700 hover:text-slate-900'}`}
+            className={`px-10 py-4 rounded-[2rem] text-sm font-black transition-all ${!isK12 ? 'bg-white text-blue-800 shadow-2xl scale-105' : 'text-slate-700 hover:text-slate-900'}`}
           >
             Birth to 3 (Part C)
           </button>
@@ -178,7 +178,7 @@ const Playbook: React.FC<{ group: StudentGroup, setGroup: (g: StudentGroup) => v
                   <span className="text-7xl drop-shadow-xl">{activeSection.icon}</span>
                   <div>
                       <h2 className="text-4xl font-black text-slate-900 tracking-tighter">{activeSection.title}</h2>
-                      <div className={`mt-2 inline-block px-4 py-1.5 rounded-full text-[11px] font-black uppercase tracking-[0.2em] border-2 shadow-sm ${isK12 ? 'bg-red-50 text-red-700 border-red-100' : 'bg-teal-50 text-teal-800 border-teal-100'}`}>
+                      <div className={`mt-2 inline-block px-4 py-1.5 rounded-full text-[11px] font-black uppercase tracking-[0.2em] border-2 shadow-sm ${isK12 ? 'bg-red-50 text-red-700 border-red-100' : 'bg-blue-50 text-blue-800 border-blue-100'}`}>
                         {isK12 ? 'WPS Part B Requirements' : 'WPS Part C Requirements'}
                       </div>
                   </div>
@@ -192,19 +192,19 @@ const Playbook: React.FC<{ group: StudentGroup, setGroup: (g: StudentGroup) => v
                     <ul className="space-y-8">
                       {activeSection.content.map((item, i) => (
                         <li key={i} className="flex gap-6 text-slate-900 font-black text-xl leading-snug items-start">
-                          <span className={`${isK12 ? 'text-red-600' : 'text-teal-700'} text-2xl`}>{i+1}.</span>
+                          <span className={`${isK12 ? 'text-red-600' : 'text-blue-700'} text-2xl`}>{i+1}.</span>
                           <span className="pt-1">{item}</span>
                         </li>
                       ))}
                     </ul>
                 </section>
 
-                <section className={`p-10 rounded-[3rem] border-4 shadow-xl ${isK12 ? 'border-red-100 bg-red-50/20 shadow-red-900/5' : 'border-teal-100 bg-teal-50/20 shadow-teal-900/5'}`}>
+                <section className={`p-10 rounded-[3rem] border-4 shadow-xl ${isK12 ? 'border-red-100 bg-red-50/20 shadow-red-900/5' : 'border-blue-100 bg-blue-50/20 shadow-blue-900/5'}`}>
                     <h3 className="text-xs font-black text-slate-600 uppercase tracking-[0.3em] mb-8">Compliance Checkup</h3>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                       {activeSection.checklists.map((item, i) => (
                         <label key={i} className="flex items-center gap-5 p-5 bg-white rounded-3xl border-2 border-slate-100 cursor-pointer hover:border-slate-900 transition-all shadow-md group">
-                          <input type="checkbox" className={`w-8 h-8 rounded-xl ${isK12 ? 'text-red-600' : 'text-teal-700'} border-slate-300 focus:ring-slate-900 shadow-inner`} />
+                          <input type="checkbox" className={`w-8 h-8 rounded-xl ${isK12 ? 'text-red-600' : 'text-blue-700'} border-slate-300 focus:ring-slate-900 shadow-inner`} />
                           <span className="text-base text-slate-900 font-black leading-tight group-hover:text-black">{item}</span>
                         </label>
                       ))}

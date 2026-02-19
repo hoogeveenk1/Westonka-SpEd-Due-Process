@@ -15,10 +15,10 @@ const Tools: React.FC<ToolsProps> = ({ group }) => {
   const [auditScore, setAuditScore] = useState(0);
   
   const isK12 = group === StudentGroup.K12;
-  const accentColor = isK12 ? 'bg-red-600' : 'bg-teal-700';
-  const textColor = isK12 ? 'text-red-700' : 'text-teal-800';
-  const borderColor = isK12 ? 'border-red-200' : 'border-teal-200';
-  const lightBg = isK12 ? 'bg-red-50' : 'bg-teal-50';
+  const accentColor = isK12 ? 'bg-red-600' : 'bg-blue-600';
+  const textColor = isK12 ? 'text-red-700' : 'text-blue-800';
+  const borderColor = isK12 ? 'border-red-200' : 'border-blue-200';
+  const lightBg = isK12 ? 'bg-red-50' : 'bg-blue-50';
 
   const checkItems = useMemo(() => isK12 ? [
     'Signed Parent Consent for Evaluation',
@@ -54,6 +54,10 @@ const Tools: React.FC<ToolsProps> = ({ group }) => {
   ];
 
   const marssSettings = [
+    // Numerical Order requested by user
+    { code: '01', label: '01 - Regular Class < 21%', cat: 'K-12' },
+    { code: '02', label: '02 - Resource Room 21-60%', cat: 'K-12' },
+    { code: '03', label: '03 - Separate Class > 60%', cat: 'K-12' },
     { code: '11', label: '11 - Children with Dev Delays (B-2)', cat: 'Birth-2' },
     { code: '12', label: '12 - Typically developing children (B-2)', cat: 'Birth-2' },
     { code: '13', label: '13 - Home (B-2)', cat: 'Birth-2' },
@@ -61,20 +65,26 @@ const Tools: React.FC<ToolsProps> = ({ group }) => {
     { code: '31', label: '31 - EC program (majority SpEd in setting)', cat: '3-5' },
     { code: '32', label: '32 - EC program (majority SpEd another location)', cat: '3-5' },
     { code: '41', label: '41 - Separate Class', cat: '3-5' },
-    { code: '45', label: '45 - Home (3-5)', cat: '3-5' },
-    { code: '01', label: '01 - Regular Class < 21%', cat: 'K-12' },
-    { code: '02', label: '02 - Resource Room 21-60%', cat: 'K-12' },
-    { code: '03', label: '03 - Separate Class > 60%', cat: 'K-12' }
+    { code: '45', label: '45 - Home (3-5)', cat: '3-5' }
   ];
 
   const marssDisabilities = [
+    { code: '00', label: '00 - No IEP/IFSP, non-disabled student' },
     { code: '01', label: '01 - Speech/Language Impaired' },
-    { code: '02', label: '02 - DCD Mild-Moderate' },
+    { code: '02', label: '02 - Dev Cog Disability (DCD): Mild-Mod' },
+    { code: '03', label: '03 - Dev Cog Disability (DCD): Severe-Profound' },
+    { code: '04', label: '04 - Physically Impaired' },
+    { code: '05', label: '05 - Deaf – Hard of Hearing' },
+    { code: '06', label: '06 - Visually Impaired' },
     { code: '07', label: '07 - Specific Learning Disabilities' },
     { code: '08', label: '08 - Emotional/Behavioral Disorders (EBD)' },
+    { code: '09', label: '09 - Deaf – Blind' },
     { code: '10', label: '10 - Other Health Disabilities' },
     { code: '11', label: '11 - Autism Spectrum Disorder' },
-    { code: '12', label: '12 - Developmental Delay' }
+    { code: '12', label: '12 - Developmental Delay' },
+    { code: '14', label: '14 - Traumatic Brain Injury Disabled' },
+    { code: '16', label: '16 - Severely Multiply Impaired' },
+    { code: '54', label: '54 - 504 plan' }
   ];
 
   const [marssData, setMarssData] = useState({
@@ -82,10 +92,13 @@ const Tools: React.FC<ToolsProps> = ({ group }) => {
     ssid: '',
     changeTypes: [] as string[],
     effectiveDate: '',
+    evalStartDate: '',
+    evalEndDate: '',
+    serviceStartDate: '',
     details: '',
     evalHours: '',
     eligibilityStatus: 'Qualified',
-    endCode: '25', // Updated default to Code 25 (Eligible Eval Only)
+    endCode: '25',
     newSettingCode: '',
     newDisabilityCode: ''
   });
@@ -112,21 +125,30 @@ const Tools: React.FC<ToolsProps> = ({ group }) => {
     
     if (marssData.changeTypes.includes('Initial Evaluation Hours')) {
       specificSections += `--- INITIAL EVALUATION DATA ---\n`;
+      specificSections += `Start of Evaluation: ${marssData.evalStartDate || 'Not provided'}\n`;
+      specificSections += `End of Evaluation: ${marssData.evalEndDate || 'Not provided'}\n`;
+      specificSections += `Service Start Date: ${marssData.serviceStartDate || 'Not provided'}\n`;
       specificSections += `Evaluation Hours: ${marssData.evalHours}\n`;
       specificSections += `Eligibility Result: ${marssData.eligibilityStatus}\n`;
-      if (marssData.eligibilityStatus === 'Did Not Qualify') {
+      
+      if (marssData.eligibilityStatus === 'Qualified') {
+        const disabilityLabel = marssDisabilities.find(d => d.code === marssData.newDisabilityCode)?.label || 'Not Specified';
+        const settingLabel = marssSettings.find(s => s.code === marssData.newSettingCode)?.label || 'Not Specified';
+        specificSections += `Primary Disability: ${disabilityLabel}\n`;
+        specificSections += `Instructional Setting: ${settingLabel}\n`;
+      } else {
         const label = marssEndCodes.find(c => c.code === marssData.endCode)?.label || marssData.endCode;
         specificSections += `MARSS Status End Code: ${label}\n`;
       }
-      specificSections += `Eval Completion / Service Start Date: ${marssData.effectiveDate}\n\n`;
+      specificSections += `\n`;
     }
 
-    if (marssData.changeTypes.includes('Setting Change')) {
+    if (marssData.changeTypes.includes('Setting Change') && !marssData.changeTypes.includes('Initial Evaluation Hours')) {
       const label = marssSettings.find(s => s.code === marssData.newSettingCode)?.label || 'Not Specified';
       specificSections += `New Instructional Setting: ${label}\n`;
     }
 
-    if (marssData.changeTypes.includes('Disability Change')) {
+    if (marssData.changeTypes.includes('Disability Change') && !marssData.changeTypes.includes('Initial Evaluation Hours')) {
       const label = marssDisabilities.find(d => d.code === marssData.newDisabilityCode)?.label || 'Not Specified';
       specificSections += `New Disability Category: ${label}\n`;
     }
@@ -143,7 +165,7 @@ Please update the following student record for District 0277 reporting purposes:
 Student Name: ${marssData.studentName}
 SSID: ${marssData.ssid}
 Changes Required: ${marssData.changeTypes.join(', ')}
-Effective Date: ${marssData.effectiveDate}
+${!marssData.changeTypes.includes('Initial Evaluation Hours') ? `Effective Date: ${marssData.effectiveDate}` : ''}
 
 ${specificSections}
 Specific Details for MARSS Entry:
@@ -315,58 +337,115 @@ SpEd Department Team`;
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-              <div className="space-y-3">
-                <label className="text-[12px] font-black text-slate-800 uppercase tracking-widest ml-1">Effective Date</label>
-                <input 
-                  type="date" 
-                  value={marssData.effectiveDate}
-                  onChange={(e) => setMarssData({...marssData, effectiveDate: e.target.value})}
-                  className="w-full px-6 py-4 bg-slate-50 border-2 border-slate-200 rounded-2xl focus:border-slate-900 outline-none font-black text-slate-900 shadow-inner"
-                />
-              </div>
+              {!marssData.changeTypes.includes('Initial Evaluation Hours') && (
+                <div className="space-y-3">
+                  <label className="text-[12px] font-black text-slate-800 uppercase tracking-widest ml-1">Effective Date</label>
+                  <input 
+                    type="date" 
+                    value={marssData.effectiveDate}
+                    onChange={(e) => setMarssData({...marssData, effectiveDate: e.target.value})}
+                    className="w-full px-6 py-4 bg-slate-50 border-2 border-slate-200 rounded-2xl focus:border-slate-900 outline-none font-black text-slate-900 shadow-inner"
+                  />
+                </div>
+              )}
 
               {marssData.changeTypes.includes('Initial Evaluation Hours') && (
-                <div className="space-y-4 p-8 bg-amber-50 rounded-[2.5rem] border-4 border-amber-200 shadow-xl animate-in slide-in-from-right duration-300">
+                <div className="md:col-span-2 space-y-6 p-8 bg-amber-50 rounded-[2.5rem] border-4 border-amber-200 shadow-xl animate-in slide-in-from-top duration-300">
                   <div className="flex items-center gap-2 mb-2">
                     <span className="text-2xl">📊</span>
-                    <h4 className="text-xs font-black text-amber-900 uppercase tracking-widest">Initial Eval Data</h4>
+                    <h4 className="text-sm font-black text-amber-900 uppercase tracking-widest">Initial Eval Reporting Window</h4>
                   </div>
-                  <div className="space-y-4">
-                    <div>
-                      <label className="text-[10px] font-black text-amber-800 uppercase ml-1">Total Hours</label>
+                  
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
+                    <div className="space-y-2">
+                      <label className="text-[10px] font-black text-amber-800 uppercase ml-1">Start of Evaluation</label>
+                      <input 
+                        type="date" value={marssData.evalStartDate}
+                        onChange={(e) => setMarssData({...marssData, evalStartDate: e.target.value})}
+                        className="w-full px-4 py-3 bg-white border-2 border-amber-200 rounded-xl font-black text-slate-900"
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <label className="text-[10px] font-black text-amber-800 uppercase ml-1">End of Evaluation</label>
+                      <input 
+                        type="date" value={marssData.evalEndDate}
+                        onChange={(e) => setMarssData({...marssData, evalEndDate: e.target.value})}
+                        className="w-full px-4 py-3 bg-white border-2 border-amber-200 rounded-xl font-black text-slate-900"
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <label className="text-[10px] font-black text-amber-800 uppercase ml-1">Start Day of Services</label>
+                      <input 
+                        type="date" value={marssData.serviceStartDate}
+                        onChange={(e) => setMarssData({...marssData, serviceStartDate: e.target.value})}
+                        className="w-full px-4 py-3 bg-white border-2 border-amber-200 rounded-xl font-black text-slate-900"
+                      />
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 pt-4">
+                    <div className="space-y-2">
+                      <label className="text-[10px] font-black text-amber-800 uppercase ml-1">Eval Hours</label>
                       <input 
                         type="number" step="0.1" value={marssData.evalHours}
                         onChange={(e) => setMarssData({...marssData, evalHours: e.target.value})}
                         className="w-full px-4 py-3 bg-white border-2 border-amber-200 rounded-xl font-black text-slate-900"
-                        placeholder="Hours"
+                        placeholder="e.g. 7.5"
                       />
                     </div>
-                    <div>
+                    <div className="space-y-2 lg:col-span-1">
                       <label className="text-[10px] font-black text-amber-800 uppercase ml-1">Result</label>
                       <div className="flex gap-2">
                         {['Qualified', 'Did Not Qualify'].map(st => (
                           <button key={st} onClick={() => setMarssData({...marssData, eligibilityStatus: st})}
-                            className={`flex-1 py-2 rounded-lg text-xs font-black border-2 transition-all ${marssData.eligibilityStatus === st ? 'bg-amber-600 text-white border-amber-600 shadow-lg' : 'bg-white text-amber-900 border-amber-200'}`}
+                            className={`flex-1 py-3 rounded-xl text-xs font-black border-2 transition-all ${marssData.eligibilityStatus === st ? 'bg-amber-600 text-white border-amber-600 shadow-lg' : 'bg-white text-amber-900 border-amber-200'}`}
                           >{st}</button>
                         ))}
                       </div>
                     </div>
-                    {marssData.eligibilityStatus === 'Did Not Qualify' && (
-                      <div className="animate-in fade-in">
-                        <label className="text-[10px] font-black text-amber-800 uppercase ml-1">Official End Code (DNQ)</label>
-                        <select value={marssData.endCode} onChange={(e) => setMarssData({...marssData, endCode: e.target.value})}
-                          className="w-full px-4 py-3 bg-white border-2 border-amber-200 rounded-xl font-black text-slate-900 appearance-none shadow-sm"
-                        >
-                          {marssEndCodes.filter(c => ['25','28','29','12'].includes(c.code)).map(c => <option key={c.code} value={c.code}>{c.label}</option>)}
-                        </select>
-                        <p className="text-[10px] text-amber-700 mt-2 font-bold px-1 italic">Use Code 25 for most Preschool/EC evaluations where eligibility is not met.</p>
-                      </div>
+
+                    {marssData.eligibilityStatus === 'Qualified' && (
+                      <>
+                        <div className="space-y-2">
+                          <label className="text-[10px] font-black text-amber-800 uppercase ml-1">Disability</label>
+                          <select 
+                            value={marssData.newDisabilityCode}
+                            onChange={(e) => setMarssData({...marssData, newDisabilityCode: e.target.value})}
+                            className="w-full px-4 py-3 bg-white border-2 border-amber-200 rounded-xl font-black text-slate-900 appearance-none shadow-sm"
+                          >
+                            <option value="">Select Disability...</option>
+                            {marssDisabilities.map(d => <option key={d.code} value={d.code}>{d.label}</option>)}
+                          </select>
+                        </div>
+                        <div className="space-y-2">
+                          <label className="text-[10px] font-black text-amber-800 uppercase ml-1">Setting</label>
+                          <select 
+                            value={marssData.newSettingCode}
+                            onChange={(e) => setMarssData({...marssData, newSettingCode: e.target.value})}
+                            className="w-full px-4 py-3 bg-white border-2 border-amber-200 rounded-xl font-black text-slate-900 appearance-none shadow-sm"
+                          >
+                            <option value="">Select Setting...</option>
+                            {marssSettings.map(s => <option key={s.code} value={s.code}>{s.label}</option>)}
+                          </select>
+                        </div>
+                      </>
                     )}
                   </div>
+
+                  {marssData.eligibilityStatus === 'Did Not Qualify' && (
+                    <div className="animate-in fade-in pt-4 border-t border-amber-200">
+                      <label className="text-[10px] font-black text-amber-800 uppercase ml-1">Official End Code (DNQ)</label>
+                      <select value={marssData.endCode} onChange={(e) => setMarssData({...marssData, endCode: e.target.value})}
+                        className="w-full px-4 py-3 bg-white border-2 border-amber-200 rounded-xl font-black text-slate-900 appearance-none shadow-sm"
+                      >
+                        {marssEndCodes.filter(c => ['25','28','29','12'].includes(c.code)).map(c => <option key={c.code} value={c.code}>{c.label}</option>)}
+                      </select>
+                    </div>
+                  )}
                 </div>
               )}
 
-              {marssData.changeTypes.includes('Setting Change') && (
+              {(marssData.changeTypes.includes('Setting Change') && !marssData.changeTypes.includes('Initial Evaluation Hours')) && (
                 <div className="space-y-3 animate-in fade-in">
                    <label className="text-[12px] font-black text-slate-800 uppercase tracking-widest ml-1">New Instructional Setting</label>
                    <select 
@@ -380,7 +459,7 @@ SpEd Department Team`;
                 </div>
               )}
 
-              {marssData.changeTypes.includes('Disability Change') && (
+              {(marssData.changeTypes.includes('Disability Change') && !marssData.changeTypes.includes('Initial Evaluation Hours')) && (
                 <div className="space-y-3 animate-in fade-in">
                    <label className="text-[12px] font-black text-slate-800 uppercase tracking-widest ml-1">New Disability Category</label>
                    <select 
@@ -396,7 +475,7 @@ SpEd Department Team`;
             </div>
 
             <div className="space-y-3">
-              <label className="text-[12px] font-black text-slate-800 uppercase tracking-widest ml-1">Specific Details / Notes</label>
+              <label className="text-[12px] font-black text-slate-800 uppercase tracking-widest ml-1">Additional Entry Details</label>
               <textarea 
                 value={marssData.details}
                 onChange={(e) => setMarssData({...marssData, details: e.target.value})}
@@ -408,7 +487,7 @@ SpEd Department Team`;
             <div className="flex flex-col sm:flex-row gap-6 pt-6 border-t-2 border-slate-100">
               <button 
                 onClick={handleMarssEmail}
-                disabled={!marssData.studentName || !marssData.effectiveDate || marssData.changeTypes.length === 0}
+                disabled={!marssData.studentName || marssData.changeTypes.length === 0}
                 className={`flex-1 py-6 ${accentColor} text-white rounded-[2rem] font-black hover:scale-[1.01] transition-all shadow-2xl flex items-center justify-center gap-4 disabled:opacity-50 text-xl`}
               >
                 <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M3 8l7.89 5.26a2 2 0 002.22 0L22 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" /></svg>
@@ -416,7 +495,7 @@ SpEd Department Team`;
               </button>
               <button 
                 onClick={copyToClipboard}
-                disabled={!marssData.studentName || !marssData.effectiveDate || marssData.changeTypes.length === 0}
+                disabled={!marssData.studentName || marssData.changeTypes.length === 0}
                 className="flex-1 py-6 bg-slate-900 text-white rounded-[2rem] font-black hover:bg-black transition-all shadow-2xl flex items-center justify-center gap-4 disabled:opacity-50 text-xl"
               >
                 {copyFeedback ? (
@@ -522,7 +601,7 @@ SpEd Department Team`;
               <div className="space-y-5">
                 {checkItems.map((item, i) => (
                   <label key={i} className="flex items-center gap-6 p-8 bg-slate-50 border-4 border-slate-100 rounded-[2.5rem] cursor-pointer hover:border-slate-900 transition-all group shadow-sm hover:shadow-xl">
-                    <input type="checkbox" onChange={(e) => setAuditScore(prev => e.target.checked ? prev + 1 : prev - 1)} className={`w-9 h-9 rounded-2xl border-slate-400 ${textColor} focus:ring-slate-900 cursor-pointer shadow-inner bg-white`}/>
+                    <input type="checkbox" onChange={(e) => setAuditScore(prev => e.target.checked ? prev + 1 : prev - 1)} className={`w-9 h-9 rounded-2xl border-slate-400 ${textColor} focus:ring-slate-900 cursor-pointer shadow-inner bg-white`}/ >
                     <span className="text-slate-900 font-black text-2xl">{item}</span>
                   </label>
                 ))}
