@@ -8,7 +8,10 @@ export class GeminiService {
     // Access the API key from the environment. 
     // Vite will inject this via the 'define' config or import.meta.env
     const apiKey = (typeof process !== 'undefined' && process.env?.API_KEY) 
-      ? process.env.API_KEY 
+      ? import.meta.env.VITE_GEMINI_API_KEY
+      git add .
+      git commit -m "Fix Gemini env variable for Vite"
+    git push
       : '';
       
     this.ai = new GoogleGenAI({ apiKey: apiKey });
