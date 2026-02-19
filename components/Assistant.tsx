@@ -18,23 +18,8 @@ const Assistant: React.FC<AssistantProps> = ({ onNavigate }) => {
   const [input, setInput] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [streamingMessage, setStreamingMessage] = useState<string>('');
-  const [apiStatus, setApiStatus] = useState<'checking' | 'connected' | 'error'>('checking');
+  const [apiStatus, setApiStatus] = useState<'connected' | 'error' | 'idle'>('idle');
   const scrollRef = useRef<HTMLDivElement>(null);
-
-  useEffect(() => {
-    // Diagnostic check for the API
-    const checkApi = async () => {
-      try {
-        // Just a tiny test call to check connectivity
-        await geminiService.sendMessage("test connection");
-        setApiStatus('connected');
-      } catch (e) {
-        console.error("Diagnostic failure:", e);
-        setApiStatus('error');
-      }
-    };
-    checkApi();
-  }, []);
 
   useEffect(() => {
     if (scrollRef.current) {
@@ -77,11 +62,20 @@ const Assistant: React.FC<AssistantProps> = ({ onNavigate }) => {
       setMessages(prev => [...prev, modelMessage]);
       setStreamingMessage('');
       setApiStatus('connected');
-    } catch (error) {
+    } catch (error: any) {
+      console.error("Assistant Error:", error);
       setApiStatus('error');
+      
+      // Standard Gemini 429 handling
+      const isRateLimit = error?.message?.includes('429') || error?.status === 429;
+      
+      const errorMessage = isRateLimit 
+        ? "I am currently hitting my rate limit (15 requests per minute). Please wait a moment and try your prompt again." 
+        : "I encountered an error. Please check your connection or district configuration.";
+
       setMessages(prev => [...prev, { 
         role: 'model', 
-        text: "I encountered an error. Please check your connection or district credentials in the Vercel dashboard.", 
+        text: errorMessage, 
         timestamp: new Date() 
       }]);
     } finally {
@@ -99,10 +93,10 @@ const Assistant: React.FC<AssistantProps> = ({ onNavigate }) => {
           <div>
             <h2 className="font-bold text-slate-900 leading-tight">Due Process Agent</h2>
             <div className="flex items-center gap-2 mt-0.5">
-              {apiStatus === 'checking' && (
+              {apiStatus === 'idle' && (
                 <span className="flex items-center gap-1.5">
-                  <span className="w-2 h-2 rounded-full bg-slate-300 animate-pulse"></span>
-                  <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Checking API...</span>
+                  <span className="w-2 h-2 rounded-full bg-slate-300"></span>
+                  <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Ready</span>
                 </span>
               )}
               {apiStatus === 'connected' && (
@@ -114,7 +108,7 @@ const Assistant: React.FC<AssistantProps> = ({ onNavigate }) => {
               {apiStatus === 'error' && (
                 <span className="flex items-center gap-1.5">
                   <span className="w-2 h-2 rounded-full bg-red-500 animate-ping"></span>
-                  <span className="text-[10px] font-black text-red-600 uppercase tracking-widest">API Connection Error</span>
+                  <span className="text-[10px] font-black text-red-600 uppercase tracking-widest">Connection Error</span>
                 </span>
               )}
             </div>

@@ -1,31 +1,62 @@
+
+import { GoogleGenAI } from "@google/genai";
 import { SYSTEM_INSTRUCTION } from "../constants";
 
-type HistoryMessage = {
-  role: "user" | "model";
-  parts: { text: string }[];
-};
-
 export class GeminiService {
-  async sendMessage(message: string, history: HistoryMessage[] = []) {
-    const resp = await fetch("/api/generate", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        message,
-        history,
-        systemInstruction: SYSTEM_INSTRUCTION,
-      }),
-    });
+  private ai: any;
 
-    const data = await resp.json();
-    if (!resp.ok) throw new Error(data?.error || "API request failed");
-    return data.text as string;
+  constructor() {
+    // Access the API key from the environment. 
+    // Vite will inject this via the 'define' config or import.meta.env
+    const apiKey = (typeof process !== 'undefined' && process.env?.API_KEY) 
+      ? process.env.API_KEY 
+      : '';
+      
+    this.ai = new GoogleGenAI({ apiKey: apiKey });
   }
 
-  async *sendMessageStream(message: string, history: HistoryMessage[] = []) {
-    // Simple non-streaming fallback (streaming needs a different server setup)
-    const text = await this.sendMessage(message, history);
-    yield text;
+  async sendMessage(message: string, history: { role: 'user' | 'model', parts: { text: string }[] }[] = []) {
+    try {
+      const response = await this.ai.models.generateContent({
+        model: 'gemini-3-flash-preview',
+        contents: [
+          ...history,
+          { role: 'user', parts: [{ text: message }] }
+        ],
+        config: {
+          systemInstruction: SYSTEM_INSTRUCTION,
+          temperature: 0.7,
+        }
+      });
+
+      return response.text;
+    } catch (error) {
+      console.error("Gemini API Error:", error);
+      throw error;
+    }
+  }
+
+  async* sendMessageStream(message: string, history: any[] = []) {
+    try {
+        const stream = await this.ai.models.generateContentStream({
+            model: 'gemini-3-flash-preview',
+            contents: [
+                ...history,
+                { role: 'user', parts: [{ text: message }] }
+            ],
+            config: {
+                systemInstruction: SYSTEM_INSTRUCTION,
+                temperature: 0.7,
+            }
+        });
+
+        for await (const chunk of stream) {
+            yield chunk.text;
+        }
+    } catch (error) {
+        console.error("Gemini Streaming Error:", error);
+        throw error;
+    }
   }
 }
 
