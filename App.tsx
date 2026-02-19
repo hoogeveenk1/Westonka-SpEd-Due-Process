@@ -1,10 +1,10 @@
 
 import React, { useState, useMemo } from 'react';
-import Layout from './components/Layout.tsx';
-import Assistant from './components/Assistant.tsx';
-import Tools from './components/Tools.tsx';
-import { AppRoute, StudentGroup, PlaybookSection } from './types.ts';
-import { PLAYBOOK_SECTIONS } from './constants.tsx';
+import Layout from './components/Layout';
+import Assistant from './components/Assistant';
+import Tools from './components/Tools';
+import { AppRoute, StudentGroup } from './types';
+import { PLAYBOOK_SECTIONS } from './constants';
 
 const Dashboard: React.FC<{ 
   onNavigate: (route: AppRoute) => void, 

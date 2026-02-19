@@ -1,7 +1,7 @@
 
 import React, { useState, useRef, useEffect } from 'react';
-import { geminiService } from '../services/geminiService.ts';
-import { ChatMessage, AppRoute } from '../types.ts';
+import { geminiService } from '../services/geminiService';
+import { ChatMessage, AppRoute } from '../types';
 
 interface AssistantProps {
   onNavigate?: (route: AppRoute) => void;

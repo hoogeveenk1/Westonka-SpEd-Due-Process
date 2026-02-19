@@ -1,7 +1,7 @@
 
 import React, { useState, useMemo } from 'react';
-import { StudentGroup } from '../types.ts';
-import { geminiService } from '../services/geminiService.ts';
+import { StudentGroup } from '../types';
+import { geminiService } from '../services/geminiService';
 
 interface ToolsProps {
   group: StudentGroup;
