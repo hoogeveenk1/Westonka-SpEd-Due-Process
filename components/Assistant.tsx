@@ -1,4 +1,3 @@
-
 import React, { useState, useRef, useEffect } from 'react';
 import { geminiService } from '../services/geminiService';
 import { ChatMessage, AppRoute } from '../types';
@@ -9,18 +8,24 @@ interface AssistantProps {
 
 const Assistant: React.FC<AssistantProps> = ({ onNavigate }) => {
   const [messages, setMessages] = useState<ChatMessage[]>([
-    { 
-      role: 'model', 
-      text: "Hello! I'm your Westonka SpEd Due Process Assistant. To provide the most accurate compliance guidance, are you asking about Birth to 3 (Part C) or K-12 (Part B)?", 
-      timestamp: new Date() 
+    {
+      role: 'model',
+      text: "Hello! I'm your Westonka SpEd Due Process Assistant. To provide the most accurate compliance guidance, are you asking about Birth to 3 (Part C) or K-12 (Part B)?",
+      timestamp: new Date()
     }
   ]);
+
   const [input, setInput] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [streamingMessage, setStreamingMessage] = useState<string>('');
-  const [apiStatus, setApiStatus] = useState<'connected' | 'error' | 'idle'>('idle');
+
+  // Status is now descriptive (no auto “checking” call that burns quota)
+  const [apiStatus, setApiStatus] = useState<'idle' | 'connected' | 'rate_limited' | 'error'>('idle');
+  const [statusMessage, setStatusMessage] = useState<string>('');
+
   const scrollRef = useRef<HTMLDivElement>(null);
 
+  // Auto-scroll
   useEffect(() => {
     if (scrollRef.current) {
       scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
@@ -30,23 +35,26 @@ const Assistant: React.FC<AssistantProps> = ({ onNavigate }) => {
   const handleSend = async () => {
     if (!input.trim() || isLoading) return;
 
-    const userMessage: ChatMessage = { role: 'user', text: input, timestamp: new Date() };
-    const currentMessages = [...messages, userMessage];
-    setMessages(currentMessages);
-    const userText = input;
+    const userText = input.trim();
+    const userMessage: ChatMessage = { role: 'user', text: userText, timestamp: new Date() };
+
+    // Optimistically add user message
+    setMessages(prev => [...prev, userMessage]);
+
     setInput('');
     setIsLoading(true);
     setStreamingMessage('');
 
     try {
-      const history = messages.map(m => ({
+      // Limit history to reduce tokens/cost (tweak number as desired)
+      const history = messages.slice(-8).map(m => ({
         role: m.role,
         parts: [{ text: m.text }]
       }));
 
       let fullResponse = '';
       const stream = geminiService.sendMessageStream(userText, history);
-      
+
       for await (const chunk of stream) {
         if (chunk) {
           fullResponse += chunk;
@@ -54,30 +62,43 @@ const Assistant: React.FC<AssistantProps> = ({ onNavigate }) => {
         }
       }
 
-      const modelMessage: ChatMessage = { 
-        role: 'model', 
-        text: fullResponse || "I'm sorry, I couldn't process that request.", 
-        timestamp: new Date() 
+      const modelMessage: ChatMessage = {
+        role: 'model',
+        text: fullResponse || "I'm sorry, I couldn't process that request.",
+        timestamp: new Date()
       };
+
       setMessages(prev => [...prev, modelMessage]);
       setStreamingMessage('');
-      setApiStatus('connected');
-    } catch (error: any) {
-      console.error("Assistant Error:", error);
-      setApiStatus('error');
-      
-      // Standard Gemini 429 handling
-      const isRateLimit = error?.message?.includes('429') || error?.status === 429;
-      
-      const errorMessage = isRateLimit 
-        ? "I am currently hitting my rate limit (15 requests per minute). Please wait a moment and try your prompt again." 
-        : "I encountered an error. Please check your connection or district configuration.";
 
-      setMessages(prev => [...prev, { 
-        role: 'model', 
-        text: errorMessage, 
-        timestamp: new Date() 
-      }]);
+      setApiStatus('connected');
+      setStatusMessage('');
+    } catch (error: any) {
+      const msg = String(error?.message ?? error);
+
+      // Detect Gemini 429 quota/rate-limit
+      if (msg.includes('"code":429') || msg.includes('RESOURCE_EXHAUSTED') || msg.includes('429')) {
+        setApiStatus('rate_limited');
+        setStatusMessage('Quota/rate limit exceeded. Try again later.');
+
+        setMessages(prev => [...prev, {
+          role: 'model',
+          text:
+            "Gemini is rate-limiting us (quota exceeded). Please wait and try again later. " +
+            "If you want this to work reliably for staff, the Gemini project needs higher quota / paid tier.",
+          timestamp: new Date()
+        }]);
+      } else {
+        setApiStatus('error');
+        setStatusMessage('API error. Check Vercel logs for /api/generate.');
+
+        setMessages(prev => [...prev, {
+          role: 'model',
+          text:
+            "I hit an API error while contacting Gemini. If you’re the admin, check Vercel Logs for /api/generate for details.",
+          timestamp: new Date()
+        }]);
+      }
     } finally {
       setIsLoading(false);
     }
@@ -92,23 +113,39 @@ const Assistant: React.FC<AssistantProps> = ({ onNavigate }) => {
           </div>
           <div>
             <h2 className="font-bold text-slate-900 leading-tight">Due Process Agent</h2>
+
             <div className="flex items-center gap-2 mt-0.5">
               {apiStatus === 'idle' && (
                 <span className="flex items-center gap-1.5">
                   <span className="w-2 h-2 rounded-full bg-slate-300"></span>
-                  <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Ready</span>
+                  <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">API idle</span>
                 </span>
               )}
+
               {apiStatus === 'connected' && (
                 <span className="flex items-center gap-1.5">
                   <span className="w-2 h-2 rounded-full bg-green-500 shadow-[0_0_8px_rgba(34,197,94,0.6)]"></span>
                   <span className="text-[10px] font-black text-green-600 uppercase tracking-widest">API Active</span>
                 </span>
               )}
+
+              {apiStatus === 'rate_limited' && (
+                <span className="flex items-center gap-1.5">
+                  <span className="w-2 h-2 rounded-full bg-amber-500 shadow-[0_0_8px_rgba(245,158,11,0.6)]"></span>
+                  <span className="text-[10px] font-black text-amber-600 uppercase tracking-widest">Rate limited</span>
+                </span>
+              )}
+
               {apiStatus === 'error' && (
                 <span className="flex items-center gap-1.5">
-                  <span className="w-2 h-2 rounded-full bg-red-500 animate-ping"></span>
-                  <span className="text-[10px] font-black text-red-600 uppercase tracking-widest">Connection Error</span>
+                  <span className="w-2 h-2 rounded-full bg-red-500"></span>
+                  <span className="text-[10px] font-black text-red-600 uppercase tracking-widest">API Error</span>
+                </span>
+              )}
+
+              {!!statusMessage && (
+                <span className="text-[10px] font-bold text-slate-400">
+                  {statusMessage}
                 </span>
               )}
             </div>
@@ -116,38 +153,35 @@ const Assistant: React.FC<AssistantProps> = ({ onNavigate }) => {
         </div>
 
         {onNavigate && (
-          <button 
+          <button
             onClick={() => onNavigate(AppRoute.PLAYBOOK)}
             className="text-xs font-bold text-red-600 hover:bg-red-50 px-3 py-1.5 rounded-lg border border-red-200 transition-colors flex items-center gap-2"
           >
-            <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" /></svg>
+            <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
+            </svg>
             View Playbook
           </button>
         )}
       </div>
 
-      <div 
-        ref={scrollRef}
-        className="flex-1 overflow-y-auto p-4 space-y-6 bg-slate-50/30"
-      >
+      <div ref={scrollRef} className="flex-1 overflow-y-auto p-4 space-y-6 bg-slate-50/30">
         {messages.map((msg, i) => (
           <div key={i} className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}>
             <div className={`
               max-w-[85%] px-5 py-3 rounded-2xl text-[15px] leading-relaxed shadow-sm
-              ${msg.role === 'user' 
-                ? 'bg-red-600 text-white rounded-tr-none border border-red-700 font-medium' 
+              ${msg.role === 'user'
+                ? 'bg-red-600 text-white rounded-tr-none border border-red-700 font-medium'
                 : 'bg-white border border-slate-200 text-slate-900 rounded-tl-none font-semibold'}
             `}>
-              <div className="whitespace-pre-wrap">
-                {msg.text}
-              </div>
+              <div className="whitespace-pre-wrap">{msg.text}</div>
               <div className={`text-[10px] mt-2 font-bold uppercase tracking-tighter opacity-60 ${msg.role === 'user' ? 'text-red-100 text-right' : 'text-slate-400 text-left'}`}>
                 {msg.timestamp.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
               </div>
             </div>
           </div>
         ))}
-        
+
         {streamingMessage && (
           <div className="flex justify-start animate-in fade-in slide-in-from-bottom-2 duration-300">
             <div className="max-w-[85%] px-5 py-3 rounded-2xl rounded-tl-none bg-white border border-slate-200 text-slate-900 text-[15px] leading-relaxed shadow-sm font-semibold">
