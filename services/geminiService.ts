@@ -1,34 +1,38 @@
 import { GoogleGenAI } from "@google/genai";
 import { SYSTEM_INSTRUCTION } from "../constants";
 
+// Vite exposes env vars to the browser ONLY if they start with VITE_
+// and they must be accessed via import.meta.env
+const API_KEY = import.meta.env.VITE_GEMINI_API_KEY as string | undefined;
+
+if (!API_KEY) {
+  // This will show up in the browser console if the key isn't set in Vercel
+  throw new Error(
+    "Missing VITE_GEMINI_API_KEY. Add it in Vercel Project → Settings → Environment Variables, then redeploy."
+  );
+}
+
+type HistoryMessage = {
+  role: "user" | "model";
+  parts: { text: string }[];
+};
+
 export class GeminiService {
-  private ai: any;
+  private ai: GoogleGenAI;
 
   constructor() {
-    // Access the API key from the environment. 
-    // Vite will inject this via the 'define' config or import.meta.env
-    const apiKey = (typeof process !== 'undefined' && process.env?.API_KEY) 
-      ? import.meta.env.VITE_GEMINI_API_KEY
-      git add .
-      git commit -m "Fix Gemini env variable for Vite"
-    git push
-      : '';
-      
-    this.ai = new GoogleGenAI({ apiKey: apiKey });
+    this.ai = new GoogleGenAI({ apiKey: API_KEY });
   }
 
-  async sendMessage(message: string, history: { role: 'user' | 'model', parts: { text: string }[] }[] = []) {
+  async sendMessage(message: string, history: HistoryMessage[] = []) {
     try {
       const response = await this.ai.models.generateContent({
-        model: 'gemini-3-flash-preview',
-        contents: [
-          ...history,
-          { role: 'user', parts: [{ text: message }] }
-        ],
+        model: "gemini-3-flash-preview",
+        contents: [...history, { role: "user", parts: [{ text: message }] }],
         config: {
           systemInstruction: SYSTEM_INSTRUCTION,
           temperature: 0.7,
-        }
+        },
       });
 
       return response.text;
@@ -38,26 +42,23 @@ export class GeminiService {
     }
   }
 
-  async* sendMessageStream(message: string, history: any[] = []) {
+  async *sendMessageStream(message: string, history: HistoryMessage[] = []) {
     try {
-        const stream = await this.ai.models.generateContentStream({
-            model: 'gemini-3-flash-preview',
-            contents: [
-                ...history,
-                { role: 'user', parts: [{ text: message }] }
-            ],
-            config: {
-                systemInstruction: SYSTEM_INSTRUCTION,
-                temperature: 0.7,
-            }
-        });
+      const stream = await this.ai.models.generateContentStream({
+        model: "gemini-3-flash-preview",
+        contents: [...history, { role: "user", parts: [{ text: message }] }],
+        config: {
+          systemInstruction: SYSTEM_INSTRUCTION,
+          temperature: 0.7,
+        },
+      });
 
-        for await (const chunk of stream) {
-            yield chunk.text;
-        }
+      for await (const chunk of stream) {
+        yield chunk.text;
+      }
     } catch (error) {
-        console.error("Gemini Streaming Error:", error);
-        throw error;
+      console.error("Gemini Streaming Error:", error);
+      throw error;
     }
   }
 }
