@@ -7,9 +7,12 @@ export class GeminiService {
 
   constructor() {
     // Access the API key from the environment. 
-    // In Vercel deployments, this is injected into process.env.
-    const apiKey = typeof process !== 'undefined' ? process.env.API_KEY : '';
-    this.ai = new GoogleGenAI({ apiKey: apiKey || '' });
+    // Vite will inject this via the 'define' config or import.meta.env
+    const apiKey = (typeof process !== 'undefined' && process.env?.API_KEY) 
+      ? process.env.API_KEY 
+      : '';
+      
+    this.ai = new GoogleGenAI({ apiKey: apiKey });
   }
 
   async sendMessage(message: string, history: { role: 'user' | 'model', parts: { text: string }[] }[] = []) {
