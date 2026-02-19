@@ -1,6 +1,6 @@
 
 import React, { useState } from 'react';
-import { AppRoute } from '../types';
+import { AppRoute } from '../types.ts';
 
 interface LayoutProps {
   children: React.ReactNode;

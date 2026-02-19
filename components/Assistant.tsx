@@ -1,7 +1,7 @@
 
 import React, { useState, useRef, useEffect } from 'react';
-import { geminiService } from '../services/geminiService';
-import { ChatMessage, AppRoute } from '../types';
+import { geminiService } from '../services/geminiService.ts';
+import { ChatMessage, AppRoute } from '../types.ts';
 
 interface AssistantProps {
   onNavigate?: (route: AppRoute) => void;
@@ -18,7 +18,23 @@ const Assistant: React.FC<AssistantProps> = ({ onNavigate }) => {
   const [input, setInput] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [streamingMessage, setStreamingMessage] = useState<string>('');
+  const [apiStatus, setApiStatus] = useState<'checking' | 'connected' | 'error'>('checking');
   const scrollRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    // Diagnostic check for the API
+    const checkApi = async () => {
+      try {
+        // Just a tiny test call to check connectivity
+        await geminiService.sendMessage("test connection");
+        setApiStatus('connected');
+      } catch (e) {
+        console.error("Diagnostic failure:", e);
+        setApiStatus('error');
+      }
+    };
+    checkApi();
+  }, []);
 
   useEffect(() => {
     if (scrollRef.current) {
@@ -60,10 +76,12 @@ const Assistant: React.FC<AssistantProps> = ({ onNavigate }) => {
       };
       setMessages(prev => [...prev, modelMessage]);
       setStreamingMessage('');
+      setApiStatus('connected');
     } catch (error) {
+      setApiStatus('error');
       setMessages(prev => [...prev, { 
         role: 'model', 
-        text: "I encountered an error. Please check your connection or district credentials.", 
+        text: "I encountered an error. Please check your connection or district credentials in the Vercel dashboard.", 
         timestamp: new Date() 
       }]);
     } finally {
@@ -80,9 +98,25 @@ const Assistant: React.FC<AssistantProps> = ({ onNavigate }) => {
           </div>
           <div>
             <h2 className="font-bold text-slate-900 leading-tight">Due Process Agent</h2>
-            <div className="flex items-center gap-1.5">
-              <span className="w-2 h-2 rounded-full bg-green-500 shadow-[0_0_8px_rgba(34,197,94,0.6)]"></span>
-              <span className="text-xs font-semibold text-slate-500 uppercase tracking-wider">District 0277 Expert</span>
+            <div className="flex items-center gap-2 mt-0.5">
+              {apiStatus === 'checking' && (
+                <span className="flex items-center gap-1.5">
+                  <span className="w-2 h-2 rounded-full bg-slate-300 animate-pulse"></span>
+                  <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Checking API...</span>
+                </span>
+              )}
+              {apiStatus === 'connected' && (
+                <span className="flex items-center gap-1.5">
+                  <span className="w-2 h-2 rounded-full bg-green-500 shadow-[0_0_8px_rgba(34,197,94,0.6)]"></span>
+                  <span className="text-[10px] font-black text-green-600 uppercase tracking-widest">API Active</span>
+                </span>
+              )}
+              {apiStatus === 'error' && (
+                <span className="flex items-center gap-1.5">
+                  <span className="w-2 h-2 rounded-full bg-red-500 animate-ping"></span>
+                  <span className="text-[10px] font-black text-red-600 uppercase tracking-widest">API Connection Error</span>
+                </span>
+              )}
             </div>
           </div>
         </div>
