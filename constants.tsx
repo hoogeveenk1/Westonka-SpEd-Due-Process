@@ -1,4 +1,3 @@
-
 import { PlaybookSection, StudentGroup } from './types';
 
 export const PLAYBOOK_SECTIONS: PlaybookSection[] = [
