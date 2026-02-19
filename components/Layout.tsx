@@ -14,6 +14,7 @@ const Layout: React.FC<LayoutProps> = ({ children, activeRoute, setActiveRoute }
   const navItems = [
     { id: AppRoute.DASHBOARD, label: 'Dashboard', icon: '🏠' },
     { id: AppRoute.PLAYBOOK, label: 'The Playbook', icon: '📖' },
+    { id: AppRoute.TOOLS, label: 'Compliance Tools', icon: '🛠️' },
     { id: AppRoute.ASSISTANT, label: 'AI Assistant', icon: '🤖' },
     { id: AppRoute.RESOURCES, label: 'Resources', icon: '🔗' },
   ];
@@ -62,18 +63,17 @@ const Layout: React.FC<LayoutProps> = ({ children, activeRoute, setActiveRoute }
                 rel="noreferrer"
                 className="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-slate-400 hover:bg-slate-800 hover:text-white transition-all"
               >
-                <span className="text-xl">🛠️</span>
-                <span className="font-medium">SpEd Forms (0277)</span>
-                <svg className="w-3 h-3 ml-auto opacity-50" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" /></svg>
+                <span className="text-xl">📊</span>
+                <span className="font-medium">SpEd Forms Login</span>
               </a>
             </div>
           </nav>
 
           <div className="p-4 bg-slate-800/50 m-4 rounded-xl">
-            <p className="text-xs text-slate-400 mb-2">Compliance Status</p>
+            <p className="text-xs text-slate-400 mb-2 uppercase tracking-tighter">System Health</p>
             <div className="flex items-center gap-2">
               <div className="w-2 h-2 rounded-full bg-green-500 animate-pulse"></div>
-              <span className="text-xs font-medium text-slate-200">System Ready</span>
+              <span className="text-xs font-bold text-slate-200">Compliance Ready</span>
             </div>
           </div>
         </div>
@@ -93,13 +93,13 @@ const Layout: React.FC<LayoutProps> = ({ children, activeRoute, setActiveRoute }
           
           <div className="flex items-center gap-4">
              <div className="hidden sm:block">
-                <span className="text-sm font-semibold text-slate-700">Westonka Public Schools (0277)</span>
+                <span className="text-sm font-bold text-slate-700">Westonka Public Schools (0277)</span>
              </div>
           </div>
 
           <div className="flex items-center gap-3">
-             <div className="w-8 h-8 rounded-full bg-slate-200 flex items-center justify-center text-slate-500 font-bold text-xs border border-slate-300">
-               ST
+             <div className="px-3 py-1 rounded-full bg-slate-100 border border-slate-200 text-slate-500 text-[10px] font-bold uppercase tracking-wider">
+               SpEd Department
              </div>
           </div>
         </header>

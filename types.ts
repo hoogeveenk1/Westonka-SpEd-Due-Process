@@ -25,5 +25,6 @@ export enum AppRoute {
   DASHBOARD = 'dashboard',
   PLAYBOOK = 'playbook',
   ASSISTANT = 'assistant',
+  TOOLS = 'tools',
   RESOURCES = 'resources'
 }
