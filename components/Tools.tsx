@@ -289,6 +289,10 @@ SpEd Department Team`;
               <div>
                 <h3 className="text-3xl font-black text-slate-900 tracking-tighter">MARSS Change Notifier</h3>
                 <p className="text-slate-800 mt-2 font-bold text-lg leading-relaxed tracking-tight">Generate District 0277 alerts using validated FY 2025-26 Reference Guide standards.</p>
+                <div className="mt-3 flex items-center gap-2 text-emerald-700 bg-emerald-50 px-3 py-1.5 rounded-lg w-fit border border-emerald-100">
+                  <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20"><path fillRule="evenodd" d="M2.166 4.999A11.954 11.954 0 0010 1.944 11.954 11.954 0 0017.834 5c.11.65.166 1.32.166 2.001 0 4.946-2.567 9.29-6.433 11.771a.75.75 0 01-.834 0C6.833 16.29 4.267 11.945 4.267 7c0-.68.056-1.35.166-2.001zm8.334 1.251a.75.75 0 01.75.75v3.5a.75.75 0 01-1.5 0v-3.5a.75.75 0 01.75-.75zm0 6a1 1 0 100-2 1 1 0 000 2z" clipRule="evenodd" /></svg>
+                  <span className="text-[11px] font-black uppercase tracking-wider">Privacy: Data is never stored. It stays in your browser and email client.</span>
+                </div>
               </div>
               <div className="bg-red-100 text-red-900 px-4 py-2 rounded-xl text-[11px] font-black uppercase tracking-widest shrink-0 border-2 border-red-200">FY 25-26 Data</div>
             </div>
@@ -546,8 +550,14 @@ SpEd Department Team`;
 
         {activeTool === 'pwn' && (
            <div className="space-y-8 animate-in fade-in">
-              <h3 className="text-3xl font-black text-slate-900 tracking-tight">PWN Helper</h3>
-              <textarea value={pwnInput} onChange={(e) => setPwnInput(e.target.value)} placeholder="Describe the change..." className="w-full h-48 px-8 py-6 bg-slate-50 border-4 border-slate-100 rounded-[2rem] font-black text-slate-800 text-lg shadow-inner outline-none focus:border-slate-900"/>
+              <div className="flex justify-between items-start">
+                <h3 className="text-3xl font-black text-slate-900 tracking-tight">PWN Helper</h3>
+                <div className="bg-amber-50 text-amber-800 px-4 py-2 rounded-xl border border-amber-200 flex items-center gap-2">
+                  <span className="text-lg">⚠️</span>
+                  <span className="text-[10px] font-black uppercase tracking-widest">Privacy: Do not enter student names</span>
+                </div>
+              </div>
+              <textarea value={pwnInput} onChange={(e) => setPwnInput(e.target.value)} placeholder="Describe the change (use initials or 'Student A')..." className="w-full h-48 px-8 py-6 bg-slate-50 border-4 border-slate-100 rounded-[2rem] font-black text-slate-800 text-lg shadow-inner outline-none focus:border-slate-900"/>
               <button onClick={generatePwn} disabled={!pwnInput || isGeneratingPwn} className={`w-full py-6 ${accentColor} text-white rounded-[2rem] font-black hover:opacity-90 shadow-2xl text-xl disabled:opacity-50`}>
                 {isGeneratingPwn ? 'Drafting Technical Details...' : 'Generate SpEd Forms Draft'}
               </button>
@@ -586,8 +596,14 @@ SpEd Department Team`;
 
         {activeTool === 'goal' && (
            <div className="space-y-8 animate-in fade-in">
-              <h3 className="text-3xl font-black text-slate-900 tracking-tight">Goal Stress-Tester</h3>
-              <textarea value={goalInput} onChange={(e) => setGoalInput(e.target.value)} placeholder="Paste goal here..." className="w-full h-40 px-8 py-6 bg-slate-50 border-4 border-slate-100 rounded-[2rem] font-black text-slate-800 text-lg shadow-inner outline-none focus:border-slate-900"/>
+              <div className="flex justify-between items-start">
+                <h3 className="text-3xl font-black text-slate-900 tracking-tight">Goal Stress-Tester</h3>
+                <div className="bg-amber-50 text-amber-800 px-4 py-2 rounded-xl border border-amber-200 flex items-center gap-2">
+                  <span className="text-lg">⚠️</span>
+                  <span className="text-[10px] font-black uppercase tracking-widest">Privacy: Use initials only</span>
+                </div>
+              </div>
+              <textarea value={goalInput} onChange={(e) => setGoalInput(e.target.value)} placeholder="Paste goal here (use initials)..." className="w-full h-40 px-8 py-6 bg-slate-50 border-4 border-slate-100 rounded-[2rem] font-black text-slate-800 text-lg shadow-inner outline-none focus:border-slate-900"/>
               <button onClick={testGoal} disabled={!goalInput || isTestingGoal} className={`w-full py-6 ${accentColor} text-white rounded-[2rem] font-black shadow-2xl text-xl`}>
                 {isTestingGoal ? 'Critiquing Technical Standards...' : 'Validate SMART Criteria'}
               </button>
