@@ -340,6 +340,17 @@ SpEd Department Team`;
               </div>
             </div>
 
+            {/* Reporting Tip */}
+            <div className="p-6 bg-slate-100 rounded-[2rem] border-2 border-slate-200 shadow-sm">
+              <div className="flex items-center gap-3 mb-2">
+                <span className="text-xl">💡</span>
+                <h4 className="text-xs font-black uppercase tracking-widest text-slate-600">Reporting Tip</h4>
+              </div>
+              <p className="text-sm font-bold text-slate-800">
+                Ensure you distinguish between <span className="text-red-700">Co-Taught</span> (General Ed setting) and <span className="text-blue-700">Small Group</span> (Special Ed setting) minutes, as they impact federal setting codes differently.
+              </p>
+            </div>
+
             <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
               {!marssData.changeTypes.includes('Initial Evaluation Hours') && (
                 <div className="space-y-3">

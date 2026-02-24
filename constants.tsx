@@ -91,6 +91,24 @@ export const PLAYBOOK_SECTIONS: PlaybookSection[] = [
       { label: 'Summary of Performance', duration: 'Upon Graduation' }
     ]
   },
+  {
+    id: 'k12-instructional-settings',
+    title: 'Instructional Settings (MARSS)',
+    icon: '🏫',
+    group: StudentGroup.K12,
+    description: 'Federal and State reporting requirements for student placement settings.',
+    content: [
+      'Co-Taught Instruction: Specialized instruction provided within the general education classroom alongside a general education teacher.',
+      'Small Group Instruction: Specialized instruction provided in a separate setting (e.g., resource room) with a special education teacher or provider.',
+      'Note: Co-Taught minutes and Small Group minutes are reported differently for federal setting calculations.'
+    ],
+    checklists: [
+      'Setting code matches service minutes',
+      'Federal setting verified in SpEd Forms',
+      'Co-taught minutes documented correctly'
+    ],
+    timelines: []
+  },
 
   // Birth to 3 (Part C)
   {
@@ -186,6 +204,10 @@ General WPS Rules:
 - Follow Minnesota State Rules and Federal IDEA guidelines.
 - Emphasize compliance, student-centered planning, and parent partnership.
 - DATA PRIVACY: Remind users NEVER to enter full student names or SSIDs into the chat. Use initials or "Student A" for privacy.
+
+Instructional Setting Rules (District 0277):
+- Understand the distinction between Co-Taught (General Education setting) and Small Group (Special Education setting) instruction.
+- Co-Taught minutes are reported differently than Small Group minutes for federal reporting.
 
 Reference Document: Due Process Playbook for SpEd Department.
 Tone: Encouraging, precise, and authoritative.
