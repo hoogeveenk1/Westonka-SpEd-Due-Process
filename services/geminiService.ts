@@ -11,13 +11,16 @@ export class GeminiService {
       });
 
       if (!response.ok) {
-        let errorMessage = 'Failed to generate content';
+        let errorMessage = `Server error: ${response.status} ${response.statusText}`;
         try {
-          const error = await response.json();
-          errorMessage = error.error || errorMessage;
-        } catch (e) {
-          errorMessage = `Server error: ${response.status} ${response.statusText}`;
-        }
+          const text = await response.text();
+          try {
+            const error = JSON.parse(text);
+            errorMessage = error.error || errorMessage;
+          } catch (e) {
+            if (text && text.length < 200) errorMessage = text;
+          }
+        } catch (e) {}
         throw new Error(errorMessage);
       }
 
@@ -38,13 +41,16 @@ export class GeminiService {
       });
 
       if (!response.ok) {
-        let errorMessage = 'Failed to generate content';
+        let errorMessage = `Server error: ${response.status} ${response.statusText}`;
         try {
-          const error = await response.json();
-          errorMessage = error.error || errorMessage;
-        } catch (e) {
-          errorMessage = `Server error: ${response.status} ${response.statusText}`;
-        }
+          const text = await response.text();
+          try {
+            const error = JSON.parse(text);
+            errorMessage = error.error || errorMessage;
+          } catch (e) {
+            if (text && text.length < 200) errorMessage = text;
+          }
+        } catch (e) {}
         throw new Error(errorMessage);
       }
 

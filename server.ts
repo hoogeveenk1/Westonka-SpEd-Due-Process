@@ -1,7 +1,7 @@
 
 import express from "express";
 import { createServer as createViteServer } from "vite";
-import { handleGenerate } from "./api/generate.js";
+import { handleGenerate } from "./api/generate";
 
 async function startServer() {
   const app = express();
@@ -11,13 +11,24 @@ async function startServer() {
 
   // Health check
   app.get("/api/health", (req, res) => {
-    res.json({ status: "ok", env: process.env.NODE_ENV });
+    res.json({ 
+      status: "ok", 
+      env: process.env.NODE_ENV,
+      hasKey: !!process.env.GEMINI_API_KEY 
+    });
   });
 
   // API routes
-  app.post("/api/generate", (req, res, next) => {
+  app.post("/api/generate", async (req, res) => {
     console.log("POST /api/generate received");
-    handleGenerate(req, res).catch(next);
+    try {
+      await handleGenerate(req, res);
+    } catch (error: any) {
+      console.error("Unhandled Route Error:", error);
+      if (!res.headersSent) {
+        res.status(500).json({ error: error.message || "Internal Server Error" });
+      }
+    }
   });
 
   // Vite middleware for development

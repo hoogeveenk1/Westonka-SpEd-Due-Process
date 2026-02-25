@@ -41,10 +41,14 @@ const Assistant: React.FC<AssistantProps> = ({ onNavigate }) => {
     setStreamingMessage('');
 
     try {
-      const history = messages.map(m => ({
-        role: m.role,
-        parts: [{ text: m.text }]
-      }));
+      // Gemini requires the first message in contents to be from the 'user'
+      // If our first message is from the 'model' (the greeting), we should skip it in history
+      const history = messages
+        .filter((m, index) => index > 0 || m.role === 'user')
+        .map(m => ({
+          role: m.role,
+          parts: [{ text: m.text }]
+        }));
 
       let fullResponse = '';
       const stream = geminiService.sendMessageStream(userText, history);

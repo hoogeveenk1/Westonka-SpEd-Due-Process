@@ -20,11 +20,20 @@ export async function handleGenerate(req: any, res: any) {
   requestCount++;
 
   try {
+    if (!req.body) {
+      return res.status(400).json({ error: "Request body is missing." });
+    }
+
     const { message, history, systemInstruction, stream: shouldStream } = req.body;
+    
+    if (!message) {
+      return res.status(400).json({ error: "Message is required." });
+    }
+
     const apiKey = process.env.GEMINI_API_KEY;
     if (!apiKey) {
       console.error("GEMINI_API_KEY is missing from environment");
-      return res.status(500).json({ error: "Gemini API key is not configured on the server." });
+      return res.status(500).json({ error: "Gemini API key is not configured on the server. Please ensure GEMINI_API_KEY is set in the environment variables." });
     }
     const ai = new GoogleGenAI({ apiKey });
     
