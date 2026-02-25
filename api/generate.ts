@@ -21,7 +21,11 @@ export async function handleGenerate(req: any, res: any) {
 
   try {
     const { message, history, systemInstruction, stream: shouldStream } = req.body;
-    const apiKey = process.env.GEMINI_API_KEY || '';
+    const apiKey = process.env.GEMINI_API_KEY;
+    if (!apiKey) {
+      console.error("GEMINI_API_KEY is missing from environment");
+      return res.status(500).json({ error: "Gemini API key is not configured on the server." });
+    }
     const ai = new GoogleGenAI({ apiKey });
     
     if (shouldStream) {

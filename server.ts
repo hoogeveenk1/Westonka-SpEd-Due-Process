@@ -1,7 +1,7 @@
 
 import express from "express";
 import { createServer as createViteServer } from "vite";
-import { handleGenerate } from "./api/generate";
+import { handleGenerate } from "./api/generate.js";
 
 async function startServer() {
   const app = express();
@@ -9,8 +9,16 @@ async function startServer() {
 
   app.use(express.json());
 
+  // Health check
+  app.get("/api/health", (req, res) => {
+    res.json({ status: "ok", env: process.env.NODE_ENV });
+  });
+
   // API routes
-  app.post("/api/generate", handleGenerate);
+  app.post("/api/generate", (req, res, next) => {
+    console.log("POST /api/generate received");
+    handleGenerate(req, res).catch(next);
+  });
 
   // Vite middleware for development
   if (process.env.NODE_ENV !== "production") {

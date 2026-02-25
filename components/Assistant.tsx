@@ -73,7 +73,7 @@ const Assistant: React.FC<AssistantProps> = ({ onNavigate }) => {
       
       const errorMessage = isRateLimit 
         ? "I am currently hitting my rate limit. Please wait a moment and try your prompt again." 
-        : "I encountered an error. Please check your connection or district configuration.";
+        : `Error: ${error.message || "I encountered an error. Please check your connection or district configuration."}`;
 
       setMessages(prev => [...prev, { 
         role: 'model', 
