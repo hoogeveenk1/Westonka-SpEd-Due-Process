@@ -1,33 +1,22 @@
 
-import { GoogleGenAI } from "@google/genai";
 import { SYSTEM_INSTRUCTION } from "../constants";
 
 export class GeminiService {
-  private ai: any;
-
-  constructor() {
-    // Access the API key from the environment. 
-    // Vite will inject this via the 'define' config or import.meta.env
-    const apiKey = process.env.GEMINI_API_KEY || '';
-      
-    this.ai = new GoogleGenAI({ apiKey: apiKey });
-  }
-
   async sendMessage(message: string, history: { role: 'user' | 'model', parts: { text: string }[] }[] = []) {
     try {
-      const response = await this.ai.models.generateContent({
-        model: 'gemini-3-flash-preview',
-        contents: [
-          ...history,
-          { role: 'user', parts: [{ text: message }] }
-        ],
-        config: {
-          systemInstruction: SYSTEM_INSTRUCTION,
-          temperature: 0.7,
-        }
+      const response = await fetch('/api/generate', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ message, history, systemInstruction: SYSTEM_INSTRUCTION })
       });
 
-      return response.text;
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.error || 'Failed to generate content');
+      }
+
+      const data = await response.json();
+      return data.text;
     } catch (error) {
       console.error("Gemini API Error:", error);
       throw error;
@@ -36,24 +25,48 @@ export class GeminiService {
 
   async* sendMessageStream(message: string, history: any[] = []) {
     try {
-        const stream = await this.ai.models.generateContentStream({
-            model: 'gemini-3-flash-preview',
-            contents: [
-                ...history,
-                { role: 'user', parts: [{ text: message }] }
-            ],
-            config: {
-                systemInstruction: SYSTEM_INSTRUCTION,
-                temperature: 0.7,
-            }
-        });
+      const response = await fetch('/api/generate', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ message, history, systemInstruction: SYSTEM_INSTRUCTION, stream: true })
+      });
 
-        for await (const chunk of stream) {
-            yield chunk.text;
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.error || 'Failed to generate content');
+      }
+
+      const reader = response.body?.getReader();
+      if (!reader) throw new Error('No reader available');
+
+      const decoder = new TextDecoder();
+      let buffer = '';
+
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+
+        buffer += decoder.decode(value, { stream: true });
+        const lines = buffer.split('\n');
+        buffer = lines.pop() || '';
+
+        for (const line of lines) {
+          if (line.startsWith('data: ')) {
+            const data = line.slice(6);
+            if (data === '[DONE]') return;
+            try {
+              const parsed = JSON.parse(data);
+              if (parsed.error) throw new Error(parsed.error);
+              if (parsed.text) yield parsed.text;
+            } catch (e) {
+              console.error('Error parsing stream line:', e);
+            }
+          }
         }
+      }
     } catch (error) {
-        console.error("Gemini Streaming Error:", error);
-        throw error;
+      console.error("Gemini Streaming Error:", error);
+      throw error;
     }
   }
 }

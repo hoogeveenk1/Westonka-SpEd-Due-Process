@@ -212,29 +212,37 @@ SpEd Department Team`;
   const [pwnInput, setPwnInput] = useState('');
   const [pwnDraft, setPwnDraft] = useState('');
   const [isGeneratingPwn, setIsGeneratingPwn] = useState(false);
+  const [pwnCooldown, setPwnCooldown] = useState(false);
 
   const generatePwn = async () => {
+    if (pwnCooldown) return;
     setIsGeneratingPwn(true);
+    setPwnCooldown(true);
     try {
       const prompt = `Draft a SpEd PWN for: ${pwnInput}. Tone: Official District 0277. Context: ${isK12 ? 'K-12' : 'Birth-3'}. Provide 4 sections: Proposed Action, Explanation, Basis (Data), Other options considered.`;
       const result = await geminiService.sendMessage(prompt);
       setPwnDraft(result || '');
     } finally {
       setIsGeneratingPwn(false);
+      setTimeout(() => setPwnCooldown(false), 3000);
     }
   };
 
   const [goalInput, setGoalInput] = useState('');
   const [goalFeedback, setGoalFeedback] = useState('');
   const [isTestingGoal, setIsTestingGoal] = useState(false);
+  const [goalCooldown, setGoalCooldown] = useState(false);
 
   const testGoal = async () => {
+    if (goalCooldown) return;
     setIsTestingGoal(true);
+    setGoalCooldown(true);
     try {
       const result = await geminiService.sendMessage(`Critique this SpEd goal for SMART compliance: "${goalInput}". Score 0-10 and rewrite a compliant version using District 0277 standards.`);
       setGoalFeedback(result || '');
     } finally {
       setIsTestingGoal(false);
+      setTimeout(() => setGoalCooldown(false), 3000);
     }
   };
 
@@ -569,7 +577,7 @@ SpEd Department Team`;
                 </div>
               </div>
               <textarea value={pwnInput} onChange={(e) => setPwnInput(e.target.value)} placeholder="Describe the change (use initials or 'Student A')..." className="w-full h-48 px-8 py-6 bg-slate-50 border-4 border-slate-100 rounded-[2rem] font-black text-slate-800 text-lg shadow-inner outline-none focus:border-slate-900"/>
-              <button onClick={generatePwn} disabled={!pwnInput || isGeneratingPwn} className={`w-full py-6 ${accentColor} text-white rounded-[2rem] font-black hover:opacity-90 shadow-2xl text-xl disabled:opacity-50`}>
+              <button onClick={generatePwn} disabled={!pwnInput || isGeneratingPwn || pwnCooldown} className={`w-full py-6 ${accentColor} text-white rounded-[2rem] font-black hover:opacity-90 shadow-2xl text-xl disabled:opacity-50`}>
                 {isGeneratingPwn ? 'Drafting Technical Details...' : 'Generate SpEd Forms Draft'}
               </button>
               {pwnDraft && <div className="mt-8 p-10 bg-slate-900 text-slate-50 rounded-[3rem] border-8 border-slate-800 font-mono text-base leading-relaxed whitespace-pre-wrap relative shadow-2xl">
@@ -615,7 +623,7 @@ SpEd Department Team`;
                 </div>
               </div>
               <textarea value={goalInput} onChange={(e) => setGoalInput(e.target.value)} placeholder="Paste goal here (use initials)..." className="w-full h-40 px-8 py-6 bg-slate-50 border-4 border-slate-100 rounded-[2rem] font-black text-slate-800 text-lg shadow-inner outline-none focus:border-slate-900"/>
-              <button onClick={testGoal} disabled={!goalInput || isTestingGoal} className={`w-full py-6 ${accentColor} text-white rounded-[2rem] font-black shadow-2xl text-xl`}>
+              <button onClick={testGoal} disabled={!goalInput || isTestingGoal || goalCooldown} className={`w-full py-6 ${accentColor} text-white rounded-[2rem] font-black shadow-2xl text-xl disabled:opacity-50`}>
                 {isTestingGoal ? 'Critiquing Technical Standards...' : 'Validate SMART Criteria'}
               </button>
               {goalFeedback && <div className={`mt-10 p-12 rounded-[3.5rem] border-4 ${borderColor} ${lightBg} shadow-2xl text-slate-900 font-black text-xl whitespace-pre-wrap`}>{goalFeedback}</div>}

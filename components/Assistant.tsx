@@ -17,6 +17,7 @@ const Assistant: React.FC<AssistantProps> = ({ onNavigate }) => {
   ]);
   const [input, setInput] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+  const [cooldown, setCooldown] = useState(false);
   const [streamingMessage, setStreamingMessage] = useState<string>('');
   const [apiStatus, setApiStatus] = useState<'connected' | 'error' | 'idle'>('idle');
   const scrollRef = useRef<HTMLDivElement>(null);
@@ -28,7 +29,7 @@ const Assistant: React.FC<AssistantProps> = ({ onNavigate }) => {
   }, [messages, isLoading, streamingMessage]);
 
   const handleSend = async () => {
-    if (!input.trim() || isLoading) return;
+    if (!input.trim() || isLoading || cooldown) return;
 
     const userMessage: ChatMessage = { role: 'user', text: input, timestamp: new Date() };
     const currentMessages = [...messages, userMessage];
@@ -36,6 +37,7 @@ const Assistant: React.FC<AssistantProps> = ({ onNavigate }) => {
     const userText = input;
     setInput('');
     setIsLoading(true);
+    setCooldown(true);
     setStreamingMessage('');
 
     try {
@@ -70,7 +72,7 @@ const Assistant: React.FC<AssistantProps> = ({ onNavigate }) => {
       const isRateLimit = error?.message?.includes('429') || error?.status === 429;
       
       const errorMessage = isRateLimit 
-        ? "I am currently hitting my rate limit (15 requests per minute). Please wait a moment and try your prompt again." 
+        ? "I am currently hitting my rate limit. Please wait a moment and try your prompt again." 
         : "I encountered an error. Please check your connection or district configuration.";
 
       setMessages(prev => [...prev, { 
@@ -80,6 +82,8 @@ const Assistant: React.FC<AssistantProps> = ({ onNavigate }) => {
       }]);
     } finally {
       setIsLoading(false);
+      // Start 3 second cooldown after loading finishes
+      setTimeout(() => setCooldown(false), 3000);
     }
   };
 
@@ -185,7 +189,7 @@ const Assistant: React.FC<AssistantProps> = ({ onNavigate }) => {
           />
           <button
             onClick={handleSend}
-            disabled={!input.trim() || isLoading}
+            disabled={!input.trim() || isLoading || cooldown}
             className="px-6 bg-red-600 text-white rounded-2xl hover:bg-red-700 disabled:opacity-40 transition-all flex items-center justify-center shadow-lg shadow-red-600/20 active:scale-95"
           >
             <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
