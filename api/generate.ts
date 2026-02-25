@@ -44,43 +44,63 @@ export default async function handler(req: any, res: any) {
 
     const ai = new GoogleGenAI({ apiKey });
     
-    if (shouldStream) {
-      res.setHeader('Content-Type', 'text/event-stream');
-      res.setHeader('Cache-Control', 'no-cache, no-transform');
-      res.setHeader('X-Accel-Buffering', 'no'); // Disable buffering for SSE
+    // Retry logic for 503/504 errors
+    const MAX_RETRIES = 2;
+    let lastError: any = null;
 
-      const stream = await ai.models.generateContentStream({
-        model: 'gemini-3-flash-preview',
-        contents: [
-          ...(history || []),
-          { role: 'user', parts: [{ text: message }] }
-        ],
-        config: {
-          systemInstruction: systemInstruction,
-          temperature: 0.7,
-        }
-      });
+    for (let attempt = 0; attempt <= MAX_RETRIES; attempt++) {
+      try {
+        if (shouldStream) {
+          res.setHeader('Content-Type', 'text/event-stream');
+          res.setHeader('Cache-Control', 'no-cache, no-transform');
+          res.setHeader('X-Accel-Buffering', 'no'); // Disable buffering for SSE
 
-      for await (const chunk of stream) {
-        if (chunk.text) {
-          res.write(`data: ${JSON.stringify({ text: chunk.text })}\n\n`);
+          const stream = await ai.models.generateContentStream({
+            model: 'gemini-3-flash-preview',
+            contents: [
+              ...(history || []),
+              { role: 'user', parts: [{ text: message }] }
+            ],
+            config: {
+              systemInstruction: systemInstruction,
+              temperature: 0.7,
+            }
+          });
+
+          for await (const chunk of stream) {
+            if (chunk.text) {
+              res.write(`data: ${JSON.stringify({ text: chunk.text })}\n\n`);
+            }
+          }
+          res.write('data: [DONE]\n\n');
+          res.end();
+          return; // Success
+        } else {
+          const response = await ai.models.generateContent({
+            model: 'gemini-3-flash-preview',
+            contents: [
+              ...(history || []),
+              { role: 'user', parts: [{ text: message }] }
+            ],
+            config: {
+              systemInstruction: systemInstruction,
+              temperature: 0.7,
+            }
+          });
+          res.json({ text: response.text });
+          return; // Success
         }
+      } catch (error: any) {
+        lastError = error;
+        const isRetryable = error.message?.includes("503") || error.message?.includes("504") || error.message?.includes("high demand");
+        
+        if (isRetryable && attempt < MAX_RETRIES) {
+          console.warn(`Gemini 503/504 detected. Retrying attempt ${attempt + 1}...`);
+          await new Promise(resolve => setTimeout(resolve, 1000 * (attempt + 1))); // Exponential backoff
+          continue;
+        }
+        throw error; // Not retryable or max retries reached
       }
-      res.write('data: [DONE]\n\n');
-      res.end();
-    } else {
-      const response = await ai.models.generateContent({
-        model: 'gemini-3-flash-preview',
-        contents: [
-          ...(history || []),
-          { role: 'user', parts: [{ text: message }] }
-        ],
-        config: {
-          systemInstruction: systemInstruction,
-          temperature: 0.7,
-        }
-      });
-      res.json({ text: response.text });
     }
     } catch (error: any) {
       console.error("Gemini API Error:", error);
@@ -89,7 +109,12 @@ export default async function handler(req: any, res: any) {
       
       // Provide more actionable error for invalid API keys
       if (errorMessage.includes("API_KEY_INVALID") || errorMessage.includes("API key not valid")) {
-        errorMessage = "The Gemini API key provided is invalid. Please check your GEMINI_API_KEY environment variable and ensure it is a valid, active key from Google AI Studio.";
+        errorMessage = "The Gemini API key provided is invalid. Please check your GEMINI_API_KEY environment variable.";
+      }
+
+      // Handle 503 High Demand
+      if (errorMessage.includes("503") || errorMessage.includes("high demand")) {
+        errorMessage = "Google's AI servers are currently experiencing high demand. I tried to reconnect but couldn't get through. Please wait 10-20 seconds and try your message again.";
       }
       
       const errorPayload = { 
