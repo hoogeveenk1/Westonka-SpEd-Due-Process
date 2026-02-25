@@ -26,8 +26,11 @@ export class GeminiService {
 
       const data = await response.json();
       return data.text;
-    } catch (error) {
+    } catch (error: any) {
       console.error("Gemini API Error:", error);
+      if (error.name === 'TypeError' && error.message === 'Failed to fetch') {
+        console.error("Network error detected. This could be a timeout, CORS issue, or the server closing the connection prematurely.");
+      }
       throw error;
     }
   }
@@ -82,8 +85,11 @@ export class GeminiService {
           }
         }
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error("Gemini Streaming Error:", error);
+      if (error.name === 'TypeError' && error.message === 'Failed to fetch') {
+        console.error("Network error detected. This could be a timeout, CORS issue, or the server closing the connection prematurely.");
+      }
       throw error;
     }
   }

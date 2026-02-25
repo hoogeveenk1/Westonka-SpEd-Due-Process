@@ -43,8 +43,10 @@ const Assistant: React.FC<AssistantProps> = ({ onNavigate }) => {
     try {
       // Gemini requires the first message in contents to be from the 'user'
       // If our first message is from the 'model' (the greeting), we should skip it in history
+      // We also cap the history to the last 10 messages to keep payloads small and avoid timeouts
       const history = messages
         .filter((m, index) => index > 0 || m.role === 'user')
+        .slice(-10) // Keep only the last 10 messages
         .map(m => ({
           role: m.role,
           parts: [{ text: m.text }]

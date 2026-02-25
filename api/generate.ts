@@ -1,11 +1,10 @@
 
 import { GoogleGenAI } from "@google/genai";
 
-// Rate limiting state (Note: In serverless environments like Vercel, 
-// this will reset on every cold start and won't be shared across instances)
+// Rate limiting state
 let requestCount = 0;
 let windowStart = Date.now();
-const MAX_REQUESTS_PER_MINUTE = 10;
+const MAX_REQUESTS_PER_MINUTE = 100; // Increased for better UX
 
 export default async function handler(req: any, res: any) {
   // Only allow POST
@@ -21,7 +20,8 @@ export default async function handler(req: any, res: any) {
   }
 
   if (requestCount >= MAX_REQUESTS_PER_MINUTE) {
-    return res.status(429).json({ error: "Please wait a moment before sending another request." });
+    console.warn("Rate limit exceeded");
+    return res.status(429).json({ error: "Rate limit exceeded. Please wait a moment." });
   }
   requestCount++;
 
@@ -39,15 +39,15 @@ export default async function handler(req: any, res: any) {
     const apiKey = process.env.GEMINI_API_KEY;
     if (!apiKey) {
       console.error("GEMINI_API_KEY is missing from environment");
-      return res.status(500).json({ error: "Gemini API key is not configured on the server. Please ensure GEMINI_API_KEY is set in the environment variables." });
+      return res.status(500).json({ error: "Gemini API key is not configured on the server." });
     }
 
     const ai = new GoogleGenAI({ apiKey });
     
     if (shouldStream) {
       res.setHeader('Content-Type', 'text/event-stream');
-      res.setHeader('Cache-Control', 'no-cache');
-      res.setHeader('Connection', 'keep-alive');
+      res.setHeader('Cache-Control', 'no-cache, no-transform');
+      res.setHeader('X-Accel-Buffering', 'no'); // Disable buffering for SSE
 
       const stream = await ai.models.generateContentStream({
         model: 'gemini-3-flash-preview',
@@ -82,13 +82,18 @@ export default async function handler(req: any, res: any) {
       });
       res.json({ text: response.text });
     }
-  } catch (error: any) {
-    console.error("Gemini API Error:", error);
-    if (!res.headersSent) {
-      res.status(500).json({ error: error.message || "Internal Server Error" });
-    } else {
-      res.write(`data: ${JSON.stringify({ error: error.message || "Internal Server Error" })}\n\n`);
-      res.end();
+    } catch (error: any) {
+      console.error("Gemini API Error:", error);
+      const errorPayload = { 
+        error: error.message || "Internal Server Error",
+        type: error.constructor.name
+      };
+      
+      if (!res.headersSent) {
+        res.status(500).json(errorPayload);
+      } else {
+        res.write(`data: ${JSON.stringify(errorPayload)}\n\n`);
+        res.end();
+      }
     }
-  }
 }
