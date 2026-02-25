@@ -36,10 +36,10 @@ export default async function handler(req: any, res: any) {
       return res.status(400).json({ error: "Message is required." });
     }
 
-    const apiKey = process.env.GEMINI_API_KEY;
+    const apiKey = process.env.GEMINI_API_KEY?.trim();
     if (!apiKey) {
       console.error("GEMINI_API_KEY is missing from environment");
-      return res.status(500).json({ error: "Gemini API key is not configured on the server." });
+      return res.status(500).json({ error: "Gemini API key is not configured. Please add GEMINI_API_KEY to your environment variables." });
     }
 
     const ai = new GoogleGenAI({ apiKey });
@@ -84,8 +84,16 @@ export default async function handler(req: any, res: any) {
     }
     } catch (error: any) {
       console.error("Gemini API Error:", error);
+      
+      let errorMessage = error.message || "Internal Server Error";
+      
+      // Provide more actionable error for invalid API keys
+      if (errorMessage.includes("API_KEY_INVALID") || errorMessage.includes("API key not valid")) {
+        errorMessage = "The Gemini API key provided is invalid. Please check your GEMINI_API_KEY environment variable and ensure it is a valid, active key from Google AI Studio.";
+      }
+      
       const errorPayload = { 
-        error: error.message || "Internal Server Error",
+        error: errorMessage,
         type: error.constructor.name
       };
       
